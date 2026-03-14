@@ -7,18 +7,18 @@ let active = true;
 
 const cells = document.querySelectorAll('.cell');
 const statusText = document.getElementById('status');
+const scoreXText = document.getElementById('scoreX');
+const scoreOText = document.getElementById('scoreO');
 
 function joinRoom() {
     const input = document.getElementById('roomInput');
     let digits = input.value.replace(/[^0-9]/g, '');
-
-    if (digits.length === 0) return alert("Digite o PIN!");
+    if (digits.length === 0) return;
 
     roomID = digits.padStart(4, '0');
     document.getElementById('lobby').style.display = 'none';
     document.getElementById('gameArea').style.display = 'flex';
     document.getElementById('roomDisplay').innerText = roomID;
-
     socket.emit('joinRoom', roomID);
 }
 
@@ -27,15 +27,18 @@ socket.on('playerAssignment', (symbol) => {
     updateStatus();
 });
 
+socket.on('updateScore', (scores) => {
+    scoreXText.innerText = scores.X;
+    scoreOText.innerText = scores.O;
+});
+
 function updateStatus() {
     if (!active) return;
     if (!mySymbol) {
         statusText.innerText = "MODO OBSERVADOR";
-        statusText.style.color = "#64748b";
     } else {
-        const isMyTurn = (mySymbol === currentTurn);
-        statusText.innerText = isMyTurn ? `SUA VEZ (${mySymbol})` : `VEZ DO OPONENTE...`;
-        statusText.style.color = isMyTurn ? "#22c55e" : "#f59e0b";
+        statusText.innerText = (mySymbol === currentTurn) ? `SUA VEZ (${mySymbol})` : `VEZ DO OPONENTE...`;
+        statusText.style.color = (mySymbol === currentTurn) ? "#22c55e" : "#f1c40f";
     }
 }
 
@@ -52,28 +55,29 @@ socket.on('moveMade', (data) => {
     const cell = cells[data.index];
     cell.innerText = data.symbol;
     cell.style.color = data.symbol === 'X' ? '#ef4444' : '#3b82f6';
-    cell.style.textShadow = `0 0 15px ${data.symbol === 'X' ? 'rgba(239, 68, 68, 0.5)' : 'rgba(59, 130, 246, 0.5)'}`;
-    
     currentTurn = data.nextTurn;
     updateStatus();
 });
 
-socket.on('gameOver', (result) => {
+socket.on('gameOver', (data) => {
     active = false;
-    if (result === "draw") {
+    const { winner, scores } = data;
+    
+    // Atualiza o placar
+    scoreXText.innerText = scores.X;
+    scoreOText.innerText = scores.O;
+
+    if (winner === "draw") {
         statusText.innerText = "EMPATE!";
         statusText.style.color = "#94a3b8";
     } else {
-        statusText.innerText = `VITÓRIA DO ${result}!`;
-        statusText.style.color = result === 'X' ? '#ef4444' : '#3b82f6';
+        statusText.innerText = `VITÓRIA DO ${winner}!`;
+        statusText.style.color = winner === 'X' ? '#ef4444' : '#3b82f6';
     }
 });
 
 socket.on('restartGame', () => {
-    cells.forEach(c => {
-        c.innerText = "";
-        c.style.textShadow = "none";
-    });
+    cells.forEach(c => c.innerText = "");
     currentTurn = 'X';
     active = true;
     updateStatus();
