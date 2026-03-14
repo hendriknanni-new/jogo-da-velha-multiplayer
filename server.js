@@ -7,39 +7,49 @@ const io = new Server(server, { cors: { origin: "*" } });
 let players = {}; 
 let currentTurn = 'X';
 let board = Array(9).fill("");
+let gameActive = true;
+
+const checkWin = (b) => {
+    const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+    for (let p of wins) {
+        if (b[p[0]] && b[p[0]] === b[p[1]] && b[p[0]] === b[p[2]]) return b[p[0]];
+    }
+    return b.includes("") ? null : "draw";
+};
 
 io.on('connection', (socket) => {
-    // Atribui símbolo fixo por ID de conexão
-    const values = Object.values(players);
-    if (!values.includes('X')) {
-        players[socket.id] = 'X';
-    } else if (!values.includes('O')) {
-        players[socket.id] = 'O';
-    }
+    const occupied = Object.values(players);
+    if (!occupied.includes('X')) players[socket.id] = 'X';
+    else if (!occupied.includes('O')) players[socket.id] = 'O';
+    else players[socket.id] = null;
 
-    // Envia para o jogador qual símbolo ele é
     socket.emit('playerAssignment', players[socket.id]);
 
-    // Quando alguém tenta jogar
     socket.on('makeMove', (data) => {
-        // Validação: Só aceita se for a vez do símbolo e o espaço estiver vazio
-        if (data.symbol === currentTurn && board[data.index] === "") {
+        if (gameActive && data.symbol === currentTurn && board[data.index] === "" && players[socket.id] === data.symbol) {
             board[data.index] = data.symbol;
-            io.emit('moveMade', data);
-            currentTurn = currentTurn === 'X' ? 'O' : 'X';
+            const result = checkWin(board);
+            
+            io.emit('moveMade', { index: data.index, symbol: data.symbol, nextTurn: data.symbol === 'X' ? 'O' : 'X' });
+
+            if (result) {
+                gameActive = false;
+                io.emit('gameOver', result);
+            } else {
+                currentTurn = data.symbol === 'X' ? 'O' : 'X';
+            }
         }
     });
 
     socket.on('requestRestart', () => {
         board = Array(9).fill("");
         currentTurn = 'X';
+        gameActive = true;
         io.emit('restartGame');
     });
 
-    socket.on('disconnect', () => {
-        delete players[socket.id];
-    });
+    socket.on('disconnect', () => { delete players[socket.id]; });
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Servidor ON na porta ${PORT}`));
+server.listen(PORT);
