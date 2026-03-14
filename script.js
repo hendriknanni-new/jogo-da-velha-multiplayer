@@ -13,7 +13,7 @@ const scoreOText = document.getElementById('scoreO');
 function joinRoom() {
     const input = document.getElementById('roomInput');
     let digits = input.value.replace(/[^0-9]/g, '');
-    if (digits.length === 0) return;
+    if (digits.length === 0) return alert("Digite o PIN!");
 
     roomID = digits.padStart(4, '0');
     document.getElementById('lobby').style.display = 'none';
@@ -37,8 +37,9 @@ function updateStatus() {
     if (!mySymbol) {
         statusText.innerText = "MODO OBSERVADOR";
     } else {
-        statusText.innerText = (mySymbol === currentTurn) ? `SUA VEZ (${mySymbol})` : `VEZ DO OPONENTE...`;
-        statusText.style.color = (mySymbol === currentTurn) ? "#22c55e" : "#f1c40f";
+        const isMyTurn = (mySymbol === currentTurn);
+        statusText.innerText = isMyTurn ? `SUA VEZ (${mySymbol})` : `VEZ DO OPONENTE...`;
+        statusText.style.color = isMyTurn ? "#22c55e" : "#f1c40f";
     }
 }
 
@@ -61,23 +62,23 @@ socket.on('moveMade', (data) => {
 
 socket.on('gameOver', (data) => {
     active = false;
-    const { winner, scores } = data;
-    
-    // Atualiza o placar
-    scoreXText.innerText = scores.X;
-    scoreOText.innerText = scores.O;
-
-    if (winner === "draw") {
+    scoreXText.innerText = data.scores.X;
+    scoreOText.innerText = data.scores.O;
+    if (data.winner === "draw") {
         statusText.innerText = "EMPATE!";
         statusText.style.color = "#94a3b8";
     } else {
-        statusText.innerText = `VITÓRIA DO ${winner}!`;
-        statusText.style.color = winner === 'X' ? '#ef4444' : '#3b82f6';
+        statusText.innerText = `VITÓRIA DO ${data.winner}!`;
+        statusText.style.color = data.winner === 'X' ? '#ef4444' : '#3b82f6';
     }
 });
 
-socket.on('restartGame', () => {
-    cells.forEach(c => c.innerText = "");
+socket.on('restartGame', (scores) => {
+    cells.forEach(c => { c.innerText = ""; c.style.color = "white"; });
+    if(scores) {
+        scoreXText.innerText = scores.X;
+        scoreOText.innerText = scores.O;
+    }
     currentTurn = 'X';
     active = true;
     updateStatus();
