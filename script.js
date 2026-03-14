@@ -1,17 +1,23 @@
 const socket = io('https://jogo-da-velha-multiplayer.onrender.com'); 
 
-// Pega o ID da sala pela URL. Ex: site.com/?sala=123. Se não tiver, vira 'geral'
-const urlParams = new URLSearchParams(window.location.search);
-const roomID = urlParams.get('sala') || 'geral';
-
-const cells = document.querySelectorAll('.cell');
-const statusText = document.getElementById('status');
+let roomID = '';
 let mySymbol = null;
 let currentTurn = 'X';
 let active = true;
 
-// Entra na sala assim que conecta
-socket.emit('joinRoom', roomID);
+const cells = document.querySelectorAll('.cell');
+const statusText = document.getElementById('status');
+
+function joinRoom() {
+    const input = document.getElementById('roomInput').value.trim();
+    roomID = input || 'geral'; // Se vazio, vai para a sala geral
+    
+    document.getElementById('lobby').style.display = 'none';
+    document.getElementById('gameArea').style.display = 'flex';
+    document.getElementById('roomDisplay').innerText = roomID;
+
+    socket.emit('joinRoom', roomID);
+}
 
 socket.on('playerAssignment', (symbol) => {
     mySymbol = symbol;
@@ -21,7 +27,8 @@ socket.on('playerAssignment', (symbol) => {
 function updateStatus() {
     if (!active) return;
     if (!mySymbol) {
-        statusText.innerText = `Observando Sala: ${roomID}`;
+        statusText.innerText = "Sala cheia! (Observando)";
+        statusText.style.color = "#888";
     } else {
         statusText.innerText = (mySymbol === currentTurn) ? `SUA VEZ (${mySymbol})` : `Vez do oponente (${currentTurn})`;
         statusText.style.color = (mySymbol === currentTurn) ? "#2ecc71" : "#f1c40f";
