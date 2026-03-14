@@ -8,9 +8,11 @@ let rooms = {};
 const checkWinner = (board) => {
     const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
     for (let p of wins) {
-        if (board[p[0]] && board[p[0]] === board[p[1]] && board[p[0]] === board[p[2]]) return board[p[0]];
+        if (board[p[0]] && board[p[0]] === board[p[1]] && board[p[0]] === board[p[2]]) {
+            return { symbol: board[p[0]], line: p }; 
+        }
     }
-    return board.includes("") ? null : "draw";
+    return board.includes("") ? null : { symbol: "draw" };
 };
 
 io.on('connection', (socket) => {
@@ -26,7 +28,7 @@ io.on('connection', (socket) => {
         else if (!symbols.includes('O')) room.players[socket.id] = 'O';
         
         socket.emit('playerAssignment', room.players[socket.id]);
-        io.to(id).emit('updateScore', room.scores); // Envia placar ao entrar
+        io.to(id).emit('updateScore', room.scores);
     });
 
     socket.on('makeMove', (data) => {
@@ -41,8 +43,14 @@ io.on('connection', (socket) => {
 
             if (result) {
                 room.active = false;
-                if (result !== "draw") room.scores[result]++;
-                io.to(data.roomID).emit('gameOver', { winner: result, scores: room.scores });
+                if (result.symbol !== "draw") {
+                    room.scores[result.symbol]++;
+                }
+                io.to(data.roomID).emit('gameOver', { 
+                    winner: result.symbol, 
+                    scores: room.scores, 
+                    line: result.line 
+                });
             }
         }
     });
@@ -53,7 +61,7 @@ io.on('connection', (socket) => {
             room.board = Array(9).fill("");
             room.currentTurn = 'X';
             room.active = true;
-            io.to(roomID).emit('restartGame', room.scores); // Garante que o placar continue o mesmo
+            io.to(roomID).emit('restartGame', room.scores);
         }
     });
 
