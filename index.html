@@ -3,26 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tic-Tac-Toe Multiplayer Rooms</title>
+    <title>Tic-Tac-Toe PIN</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; background: #1a1a1a; color: white; margin-top: 20px; }
-        #lobby { background: #2d2d2d; padding: 20px; border-radius: 15px; text-align: center; box-shadow: 0 10px 20px rgba(0,0,0,0.5); margin-bottom: 20px; }
-        input { padding: 10px; border-radius: 5px; border: none; margin-right: 10px; width: 150px; }
-        button { padding: 10px 20px; cursor: pointer; border-radius: 5px; border: none; background: #28a745; color: white; font-weight: bold; }
+        #lobby { background: #2d2d2d; padding: 30px; border-radius: 20px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        input { padding: 15px; border-radius: 10px; border: 2px solid #444; background: #1a1a1a; color: #00ff00; font-size: 2rem; text-align: center; width: 150px; letter-spacing: 8px; margin-bottom: 20px; outline: none; }
+        input:focus { border-color: #28a745; }
+        button { padding: 12px 25px; cursor: pointer; border-radius: 8px; border: none; background: #28a745; color: white; font-weight: bold; font-size: 1.1rem; }
         #gameArea { display: none; flex-direction: column; align-items: center; }
         .board { display: grid; grid-template-columns: repeat(3, 100px); gap: 10px; margin-top: 20px; }
-        .cell { width: 100px; height: 100px; background: #333; border: 2px solid #444; display: flex; align-items: center; justify-content: center; font-size: 3rem; cursor: pointer; border-radius: 12px; }
-        #status { font-size: 1.2rem; margin: 15px 0; color: #f1c40f; font-weight: bold; }
-        #resetBtn { background: #e74c3c; margin-top: 20px; }
+        .cell { width: 100px; height: 100px; background: #333; border: 2px solid #444; display: flex; align-items: center; justify-content: center; font-size: 3rem; cursor: pointer; border-radius: 12px; font-weight: bold; }
+        #status { font-size: 1.4rem; margin: 15px 0; color: #f1c40f; height: 35px; }
+        #resetBtn { background: #e74c3c; margin-top: 25px; }
+        .room-info { margin-top: 20px; color: #666; font-size: 0.9rem; }
     </style>
 </head>
 <body>
     <h1>Tic-Tac-Toe Online</h1>
 
     <div id="lobby">
-        <p>Digite o nome da sala para jogar com um amigo:</p>
-        <input type="text" id="roomInput" placeholder="Ex: sala123">
-        <button onclick="joinRoom()">Entrar na Sala</button>
+        <p>CRIE OU ENTRE COM UM PIN:</p>
+        <input type="tel" id="roomInput" maxlength="4" placeholder="0000" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+        <br>
+        <button onclick="joinRoom()">ENTRAR NO JOGO</button>
     </div>
 
     <div id="gameArea">
@@ -39,7 +42,7 @@
             <div class="cell" data-index="8"></div>
         </div>
         <button id="resetBtn">Zerar Partida</button>
-        <p style="margin-top: 20px; color: #888;">Sala atual: <span id="roomDisplay"></span></p>
+        <p class="room-info">SALA PIN: <span id="roomDisplay" style="color:#00ff00; font-weight:bold;"></span></p>
     </div>
 
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
