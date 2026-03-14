@@ -10,12 +10,10 @@ const statusText = document.getElementById('status');
 
 function joinRoom() {
     const input = document.getElementById('roomInput').value.trim();
-    roomID = input || 'geral'; // Se vazio, vai para a sala geral
-    
+    roomID = input || 'geral';
     document.getElementById('lobby').style.display = 'none';
     document.getElementById('gameArea').style.display = 'flex';
     document.getElementById('roomDisplay').innerText = roomID;
-
     socket.emit('joinRoom', roomID);
 }
 
@@ -28,7 +26,6 @@ function updateStatus() {
     if (!active) return;
     if (!mySymbol) {
         statusText.innerText = "Sala cheia! (Observando)";
-        statusText.style.color = "#888";
     } else {
         statusText.innerText = (mySymbol === currentTurn) ? `SUA VEZ (${mySymbol})` : `Vez do oponente (${currentTurn})`;
         statusText.style.color = (mySymbol === currentTurn) ? "#2ecc71" : "#f1c40f";
@@ -53,8 +50,12 @@ socket.on('moveMade', (data) => {
 
 socket.on('gameOver', (result) => {
     active = false;
-    statusText.innerText = result === "draw" ? "EMPATE!" : `VITÓRIA DO ${result}!`;
-    statusText.style.color = "#fff";
+    if (result === "draw") {
+        statusText.innerText = "EMPATE!";
+    } else {
+        statusText.innerText = `VITÓRIA DO ${result}!`;
+    }
+    statusText.style.color = "#ffffff";
 });
 
 socket.on('restartGame', () => {
