@@ -1,35 +1,71 @@
-// Conecta ao seu servidor que está online
 const socket = io('https://jogo-da-velha-multiplayer.onrender.com'); 
 
-const board = document.getElementById('board');
 const cells = document.querySelectorAll('.cell');
 const statusText = document.getElementById('status');
 let playerSymbol = ''; 
+let boardState = ["", "", "", "", "", "", "", "", ""]; // Guarda o estado do jogo
+let gameActive = true;
 
-// Quando o servidor conecta
-socket.on('connect', () => {
-    console.log('Conectado ao servidor!');
-});
+const winningConditions = [
+    [0, 1, 2], [3, 4, 5], [6, 7, 8], // Horizontais
+    [0, 3, 6], [1, 4, 7], [2, 5, 8], // Verticais
+    [0, 4, 8], [2, 4, 6]             // Diagonais
+];
 
-// O servidor diz se você é X ou O
 socket.on('playerAssignment', (symbol) => {
     playerSymbol = symbol;
     statusText.innerText = `Você é o jogador: ${playerSymbol}`;
-    statusText.style.color = "#00ff00"; // Fica verde quando conecta
 });
 
-// Lógica de clicar
 cells.forEach(cell => {
     cell.addEventListener('click', () => {
         const index = cell.getAttribute('data-index');
-        if (cell.innerText === '' && playerSymbol !== '') {
+        
+        // Só joga se o quadrado estiver vazio e o jogo não acabou
+        if (boardState[index] === "" && gameActive && playerSymbol !== '') {
             socket.emit('makeMove', { index, symbol: playerSymbol });
         }
     });
 });
 
-// Quando alguém joga
 socket.on('moveMade', (data) => {
-    cells[data.index].innerText = data.symbol;
-    cells[data.index].style.color = data.symbol === 'X' ? '#ff4757' : '#2e96ff';
+    const { index, symbol } = data;
+    boardState[index] = symbol;
+    cells[index].innerText = symbol;
+    cells[index].style.color = symbol === 'X' ? '#ff4757' : '#2e96ff';
+    
+    checkResult();
+});
+
+function checkResult() {
+    let roundWon = false;
+
+    for (let i = 0; i < winningConditions.length; i++) {
+        const [a, b, c] = winningConditions[i];
+        if (boardState[a] && boardState[a] === boardState[b] && boardState[a] === boardState[c]) {
+            roundWon = true;
+            break;
+        }
+    }
+
+    if (roundWon) {
+        statusText.innerText = "Fim de jogo! Alguém venceu!";
+        statusText.style.color = "yellow";
+        gameActive = false;
+        return;
+    }
+
+    if (!boardState.includes("")) {
+        statusText.innerText = "Empate!";
+        gameActive = false;
+    }
+}
+
+// Escuta o comando de reiniciar que vamos criar
+socket.on('restartGame', () => {
+    boardState = ["", "", "", "", "", "", "", "", ""];
+    gameActive = true;
+    cells.forEach(cell => cell.innerText = "");
+    statusText.innerText = `Você é o jogador: ${playerSymbol}`;
+    statusText.style.color = "#00ff00";
 });
