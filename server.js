@@ -17,39 +17,42 @@ const checkWinner = (board) => {
 
 io.on('connection', (socket) => {
     socket.on('joinRoom', (roomID) => {
-        const id = String(roomID); 
+        const id = String(roomID);
         socket.join(id);
-        
         if (!rooms[id]) {
-            rooms[id] = { players: {}, board: Array(9).fill(""), currentTurn: 'X', active: true };
+            rooms[id] = { 
+                players: {}, board: Array(9).fill(""), 
+                currentTurn: 'X', active: true,
+                scores: { X: 0, O: 0 } // Placar inicial
+            };
         }
-        
         const room = rooms[id];
         const symbols = Object.values(room.players);
-        
         if (!symbols.includes('X')) room.players[socket.id] = 'X';
         else if (!symbols.includes('O')) room.players[socket.id] = 'O';
-        else room.players[socket.id] = null;
-
+        
         socket.emit('playerAssignment', room.players[socket.id]);
+        // Envia o placar atual assim que alguém entra
+        io.to(id).emit('updateScore', room.scores);
     });
 
     socket.on('makeMove', (data) => {
-        const id = String(data.roomID);
-        const room = rooms[id];
-        if (room && room.active && data.symbol === room.currentTurn && room.board[data.index] === "" && room.players[socket.id] === data.symbol) {
+        const room = rooms[data.roomID];
+        if (room && room.active && data.symbol === room.currentTurn && room.board[data.index] === "") {
             room.board[data.index] = data.symbol;
             const result = checkWinner(room.board);
             
-            io.to(id).emit('moveMade', { 
-                index: data.index, 
-                symbol: data.symbol, 
+            io.to(data.roomID).emit('moveMade', { 
+                index: data.index, symbol: data.symbol, 
                 nextTurn: data.symbol === 'X' ? 'O' : 'X' 
             });
 
             if (result) {
                 room.active = false;
-                io.to(id).emit('gameOver', result);
+                if (result !== "draw") {
+                    room.scores[result]++; // Soma ponto para o vencedor
+                }
+                io.to(data.roomID).emit('gameOver', { winner: result, scores: room.scores });
             } else {
                 room.currentTurn = data.symbol === 'X' ? 'O' : 'X';
             }
@@ -57,12 +60,11 @@ io.on('connection', (socket) => {
     });
 
     socket.on('requestRestart', (roomID) => {
-        const id = String(roomID);
-        if (rooms[id]) {
-            rooms[id].board = Array(9).fill("");
-            rooms[id].currentTurn = 'X';
-            rooms[id].active = true;
-            io.to(id).emit('restartGame');
+        if (rooms[roomID]) {
+            rooms[roomID].board = Array(9).fill("");
+            rooms[roomID].currentTurn = 'X';
+            rooms[roomID].active = true;
+            io.to(roomID).emit('restartGame');
         }
     });
 
