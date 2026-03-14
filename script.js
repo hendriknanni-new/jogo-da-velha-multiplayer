@@ -1,10 +1,17 @@
 const socket = io('https://jogo-da-velha-multiplayer.onrender.com'); 
 
+// Pega o ID da sala pela URL. Ex: site.com/?sala=123. Se não tiver, vira 'geral'
+const urlParams = new URLSearchParams(window.location.search);
+const roomID = urlParams.get('sala') || 'geral';
+
 const cells = document.querySelectorAll('.cell');
 const statusText = document.getElementById('status');
 let mySymbol = null;
 let currentTurn = 'X';
 let active = true;
+
+// Entra na sala assim que conecta
+socket.emit('joinRoom', roomID);
 
 socket.on('playerAssignment', (symbol) => {
     mySymbol = symbol;
@@ -14,7 +21,7 @@ socket.on('playerAssignment', (symbol) => {
 function updateStatus() {
     if (!active) return;
     if (!mySymbol) {
-        statusText.innerText = "Observando...";
+        statusText.innerText = `Observando Sala: ${roomID}`;
     } else {
         statusText.innerText = (mySymbol === currentTurn) ? `SUA VEZ (${mySymbol})` : `Vez do oponente (${currentTurn})`;
         statusText.style.color = (mySymbol === currentTurn) ? "#2ecc71" : "#f1c40f";
@@ -25,7 +32,7 @@ cells.forEach(cell => {
     cell.addEventListener('click', () => {
         const idx = cell.getAttribute('data-index');
         if (active && mySymbol === currentTurn && cell.innerText === "") {
-            socket.emit('makeMove', { index: idx, symbol: mySymbol });
+            socket.emit('makeMove', { roomID, index: idx, symbol: mySymbol });
         }
     });
 });
@@ -39,12 +46,8 @@ socket.on('moveMade', (data) => {
 
 socket.on('gameOver', (result) => {
     active = false;
-    if (result === "draw") {
-        statusText.innerText = "EMPATE!";
-    } else {
-        statusText.innerText = `VITÓRIA DO ${result}!`;
-    }
-    statusText.style.color = "#ffffff";
+    statusText.innerText = result === "draw" ? "EMPATE!" : `VITÓRIA DO ${result}!`;
+    statusText.style.color = "#fff";
 });
 
 socket.on('restartGame', () => {
@@ -54,4 +57,4 @@ socket.on('restartGame', () => {
     updateStatus();
 });
 
-document.getElementById('resetBtn').addEventListener('click', () => socket.emit('requestRestart'));
+document.getElementById('resetBtn').addEventListener('click', () => socket.emit('requestRestart', roomID));
