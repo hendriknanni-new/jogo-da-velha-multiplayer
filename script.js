@@ -69,3 +69,7 @@ socket.on('restartGame', () => {
     statusText.innerText = `Você é o jogador: ${playerSymbol}`;
     statusText.style.color = "#00ff00";
 });
+// Adicione isso na última linha do seu script.js
+document.getElementById('resetBtn').addEventListener('click', () => {
+    socket.emit('requestRestart');
+});
