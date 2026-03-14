@@ -2,90 +2,70 @@ const socket = io('https://jogo-da-velha-multiplayer.onrender.com');
 
 const cells = document.querySelectorAll('.cell');
 const statusText = document.getElementById('status');
-let playerSymbol = ''; 
-let boardState = ["", "", "", "", "", "", "", "", ""];
-let gameActive = true;
-let currentTurn = 'X'; // O jogo sempre começa pelo X
+let mySymbol = null;
+let currentTurn = 'X';
+let active = true;
 
 socket.on('playerAssignment', (symbol) => {
-    playerSymbol = symbol;
+    mySymbol = symbol;
     updateStatus();
 });
 
 function updateStatus() {
-    if (!gameActive) return;
-    if (currentTurn === playerSymbol) {
-        statusText.innerText = `Sua vez (${playerSymbol})`;
-        statusText.style.color = "#00ff00";
+    if (!active) return;
+    if (!mySymbol) {
+        statusText.innerText = "Sala cheia (Observador)";
+        statusText.style.color = "gray";
+    } else if (mySymbol === currentTurn) {
+        statusText.innerText = `SUA VEZ (${mySymbol})`;
+        statusText.style.color = "#2ecc71";
     } else {
-        statusText.innerText = `Vez do oponente (${currentTurn})`;
-        statusText.style.color = "#ffae00";
+        statusText.innerText = `AGUARDE... Vez do ${currentTurn}`;
+        statusText.style.color = "#f1c40f";
     }
 }
 
 cells.forEach(cell => {
     cell.addEventListener('click', () => {
-        const index = cell.getAttribute('data-index');
-        
-        // REGRA DE OURO: 
-        // 1. O quadrado tem que estar vazio
-        // 2. O jogo tem que estar ativo
-        // 3. Tem que ser a sua vez de jogar!
-        if (boardState[index] === "" && gameActive && currentTurn === playerSymbol) {
-            socket.emit('makeMove', { index, symbol: playerSymbol });
+        const idx = cell.getAttribute('data-index');
+        // REGRAS: Tem que ser sua vez, o jogo ativo e a célula vazia
+        if (active && mySymbol === currentTurn && cell.innerText === "") {
+            socket.emit('makeMove', { index: idx, symbol: mySymbol });
         }
     });
 });
 
 socket.on('moveMade', (data) => {
-    const { index, symbol } = data;
-    boardState[index] = symbol;
-    cells[index].innerText = symbol;
-    cells[index].style.color = symbol === 'X' ? '#ff4757' : '#2e96ff';
-    
-    // Troca o turno: se era X, vira O. Se era O, vira X.
-    currentTurn = (currentTurn === 'X') ? 'O' : 'X';
-    
-    if (!checkWinner()) {
-        updateStatus();
-    }
+    cells[data.index].innerText = data.symbol;
+    cells[data.index].style.color = data.symbol === 'X' ? '#ff4757' : '#2e96ff';
+    currentTurn = data.symbol === 'X' ? 'O' : 'X';
+    checkWin();
+    if (active) updateStatus();
 });
 
-function checkWinner() {
-    const winPatterns = [
-        [0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], 
-        [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]
-    ];
-
-    for (let pattern of winPatterns) {
-        const [a, b, c] = pattern;
-        if (boardState[a] && boardState[a] === boardState[b] && boardState[a] === boardState[c]) {
-            statusText.innerText = `O jogador ${boardState[a]} VENCEU!`;
+function checkWin() {
+    const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+    for (let p of wins) {
+        if (cells[p[0]].innerText && cells[p[0]].innerText === cells[p[1]].innerText && cells[p[0]].innerText === cells[p[2]].innerText) {
+            statusText.innerText = `VITÓRIA DO ${cells[p[0]].innerText}!`;
             statusText.style.color = "#fff";
-            gameActive = false;
-            return true;
+            active = false;
+            return;
         }
     }
-
-    if (!boardState.includes("")) {
-        statusText.innerText = "Empate!";
-        gameActive = false;
-        return true;
+    if ([...cells].every(c => c.innerText !== "")) {
+        statusText.innerText = "EMPATE!";
+        active = false;
     }
-    return false;
 }
 
-// Botão reiniciar
 document.getElementById('resetBtn').addEventListener('click', () => {
     socket.emit('requestRestart');
 });
 
 socket.on('restartGame', () => {
-    boardState = ["", "", "", "", "", "", "", "", ""];
-    gameActive = true;
+    cells.forEach(c => c.innerText = "");
     currentTurn = 'X';
-    cells.forEach(cell => {
-        cell.innerText = "";
-    });
+    active = true;
     updateStatus();
 });
