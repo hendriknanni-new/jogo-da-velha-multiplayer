@@ -12,14 +12,9 @@ function joinRoom() {
     const input = document.getElementById('roomInput');
     let digits = input.value.replace(/[^0-9]/g, '');
 
-    if (digits.length === 0) {
-        alert("Digite 4 números!");
-        return;
-    }
+    if (digits.length === 0) return alert("Digite o PIN!");
 
-    // Padroniza sempre para 4 dígitos (ex: 7 vira 0007)
     roomID = digits.padStart(4, '0');
-    
     document.getElementById('lobby').style.display = 'none';
     document.getElementById('gameArea').style.display = 'flex';
     document.getElementById('roomDisplay').innerText = roomID;
@@ -35,11 +30,12 @@ socket.on('playerAssignment', (symbol) => {
 function updateStatus() {
     if (!active) return;
     if (!mySymbol) {
-        statusText.innerText = "Observando jogo...";
-        statusText.style.color = "#888";
+        statusText.innerText = "MODO OBSERVADOR";
+        statusText.style.color = "#64748b";
     } else {
-        statusText.innerText = (mySymbol === currentTurn) ? `SUA VEZ (${mySymbol})` : `Aguarde oponente...`;
-        statusText.style.color = (mySymbol === currentTurn) ? "#2ecc71" : "#f1c40f";
+        const isMyTurn = (mySymbol === currentTurn);
+        statusText.innerText = isMyTurn ? `SUA VEZ (${mySymbol})` : `VEZ DO OPONENTE...`;
+        statusText.style.color = isMyTurn ? "#22c55e" : "#f59e0b";
     }
 }
 
@@ -53,8 +49,11 @@ cells.forEach(cell => {
 });
 
 socket.on('moveMade', (data) => {
-    cells[data.index].innerText = data.symbol;
-    cells[data.index].style.color = data.symbol === 'X' ? '#ff4757' : '#2e96ff';
+    const cell = cells[data.index];
+    cell.innerText = data.symbol;
+    cell.style.color = data.symbol === 'X' ? '#ef4444' : '#3b82f6';
+    cell.style.textShadow = `0 0 15px ${data.symbol === 'X' ? 'rgba(239, 68, 68, 0.5)' : 'rgba(59, 130, 246, 0.5)'}`;
+    
     currentTurn = data.nextTurn;
     updateStatus();
 });
@@ -63,14 +62,18 @@ socket.on('gameOver', (result) => {
     active = false;
     if (result === "draw") {
         statusText.innerText = "EMPATE!";
+        statusText.style.color = "#94a3b8";
     } else {
         statusText.innerText = `VITÓRIA DO ${result}!`;
+        statusText.style.color = result === 'X' ? '#ef4444' : '#3b82f6';
     }
-    statusText.style.color = "#ffffff";
 });
 
 socket.on('restartGame', () => {
-    cells.forEach(c => c.innerText = "");
+    cells.forEach(c => {
+        c.innerText = "";
+        c.style.textShadow = "none";
+    });
     currentTurn = 'X';
     active = true;
     updateStatus();
