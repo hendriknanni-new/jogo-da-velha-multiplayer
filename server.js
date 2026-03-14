@@ -2,39 +2,44 @@ const http = require('http');
 const { Server } = require('socket.io');
 
 const server = http.createServer();
-const io = new Server(server, {
-    cors: { origin: "*" } 
-});
+const io = new Server(server, { cors: { origin: "*" } });
 
-let players = [];
+let players = {}; 
+let currentTurn = 'X';
+let board = Array(9).fill("");
 
 io.on('connection', (socket) => {
-    // Atribuição de X ou O
-    if (players.length < 2) {
-        const symbol = players.length === 0 ? 'X' : 'O';
-        players.push({ id: socket.id, symbol });
-        socket.emit('playerAssignment', symbol);
-        console.log(`Jogador ${symbol} conectado`);
+    // Atribui símbolo fixo por ID de conexão
+    const values = Object.values(players);
+    if (!values.includes('X')) {
+        players[socket.id] = 'X';
+    } else if (!values.includes('O')) {
+        players[socket.id] = 'O';
     }
 
-    // Escuta as jogadas e repassa para todos
+    // Envia para o jogador qual símbolo ele é
+    socket.emit('playerAssignment', players[socket.id]);
+
+    // Quando alguém tenta jogar
     socket.on('makeMove', (data) => {
-        io.emit('moveMade', data); 
+        // Validação: Só aceita se for a vez do símbolo e o espaço estiver vazio
+        if (data.symbol === currentTurn && board[data.index] === "") {
+            board[data.index] = data.symbol;
+            io.emit('moveMade', data);
+            currentTurn = currentTurn === 'X' ? 'O' : 'X';
+        }
     });
 
-    // --- ESSA É A PARTE NOVA ---
-    // Quando alguém clica em reiniciar, o servidor avisa todos os apps
     socket.on('requestRestart', () => {
-        console.log("Reiniciando partida...");
-        io.emit('restartGame'); 
+        board = Array(9).fill("");
+        currentTurn = 'X';
+        io.emit('restartGame');
     });
-    // ---------------------------
 
     socket.on('disconnect', () => {
-        players = players.filter(p => p.id !== socket.id);
-        console.log('Jogador saiu');
+        delete players[socket.id];
     });
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
+server.listen(PORT, () => console.log(`Servidor ON na porta ${PORT}`));
