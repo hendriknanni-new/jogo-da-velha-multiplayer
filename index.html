@@ -3,76 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tic-Tac-Toe Royale</title>
+    <title>Tic-Tac-Toe Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg: #0f172a; --glass: rgba(255, 255, 255, 0.05); --border: rgba(255, 255, 255, 0.1);
-            --accent: #22c55e; --x-color: #ef4444; --o-color: #3b82f6;
-        }
+        :root { --bg: #0f172a; --glass: rgba(255, 255, 255, 0.05); --border: rgba(255, 255, 255, 0.1); --accent: #22c55e; --x-color: #ef4444; --o-color: #3b82f6; }
         body { font-family: 'Poppins', sans-serif; background: var(--bg); color: white; min-height: 100vh; display: flex; align-items: center; justify-content: center; margin: 0; }
-        .container { background: var(--glass); backdrop-filter: blur(10px); border: 1px solid var(--border); padding: 2rem; border-radius: 24px; text-align: center; width: 90%; max-width: 400px; }
-        
-        /* Estilo do Placar */
-        .scoreboard { display: flex; justify-content: space-around; margin-bottom: 20px; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 16px; border: 1px solid var(--border); }
+        .container { background: var(--glass); backdrop-filter: blur(10px); border: 1px solid var(--border); padding: 2rem; border-radius: 24px; text-align: center; width: 90%; max-width: 400px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        .scoreboard { display: flex; justify-content: space-around; margin-bottom: 20px; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 16px; border: 1px solid var(--border); }
         .score-item { display: flex; flex-direction: column; }
-        .score-val { font-size: 1.5rem; font-weight: 700; }
-        .score-label { font-size: 0.7rem; color: #94a3b8; letter-spacing: 1px; }
-
-        #lobby input { background: rgba(0, 0, 0, 0.2); border: 2px solid var(--border); border-radius: 12px; color: var(--accent); font-size: 2.5rem; width: 180px; text-align: center; padding: 10px; margin-bottom: 1.5rem; letter-spacing: 10px; }
-        button { background: var(--accent); color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 700; cursor: pointer; width: 100%; }
+        .score-val { font-size: 1.8rem; font-weight: 700; }
+        #lobby input { background: rgba(0,0,0,0.2); border: 2px solid var(--border); border-radius: 12px; color: var(--accent); font-size: 2.5rem; width: 160px; text-align: center; padding: 10px; margin-bottom: 1.5rem; letter-spacing: 5px; outline: none; }
+        button { background: var(--accent); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 700; cursor: pointer; width: 100%; font-size: 1rem; }
         #gameArea { display: none; flex-direction: column; align-items: center; }
-        .board { display: grid; grid-template-columns: repeat(3, 90px); gap: 10px; }
-        .cell { width: 90px; height: 90px; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: 700; cursor: pointer; transition: 0.2s; }
-        #status { font-weight: 700; margin-bottom: 1rem; color: #f1c40f; }
-        #resetBtn { background: transparent; border: 1px solid var(--border); margin-top: 15px; }
-        .room-badge { background: rgba(0,0,0,0.3); padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; color: #94a3b8; margin-top: 15px; display: inline-block; }
+        .board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
+        .cell { width: 90px; height: 90px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: 700; cursor: pointer; }
+        #status { font-weight: 700; margin: 15px 0; color: #f1c40f; min-height: 1.6rem; }
+        #resetBtn { background: transparent; border: 1px solid var(--border); margin-top: 20px; color: #94a3b8; }
+        .room-badge { background: rgba(0,0,0,0.3); padding: 5px 15px; border-radius: 20px; font-size: 0.8rem; color: #94a3b8; margin-top: 20px; }
     </style>
 </head>
 <body>
-
     <div class="container">
         <div id="lobby">
             <h1>TIC-TAC-TOE</h1>
-            <p style="color: #94a3b8;">DIGITE O PIN</p>
+            <p style="color: #94a3b8; font-size: 0.8rem;">CRIE UM PIN DE 4 DÍGITOS</p>
             <input type="tel" id="roomInput" maxlength="4" placeholder="0000" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
-            <button onclick="joinRoom()">Entrar na Arena</button>
+            <button onclick="joinRoom()">ENTRAR NA ARENA</button>
         </div>
 
         <div id="gameArea">
             <div class="scoreboard">
-                <div class="score-item">
-                    <span class="score-label">JOGADOR X</span>
-                    <span class="score-val" id="scoreX" style="color: var(--x-color)">0</span>
-                </div>
-                <div class="score-item">
-                    <span class="score-label">VS</span>
-                </div>
-                <div class="score-item">
-                    <span class="score-label">JOGADOR O</span>
-                    <span class="score-val" id="scoreO" style="color: var(--o-color)">0</span>
-                </div>
+                <div class="score-item"><span style="font-size: 0.6rem; color: #ef4444;">JOGADOR X</span><span class="score-val" id="scoreX" style="color: #ef4444">0</span></div>
+                <div class="score-item"><span style="font-size: 0.6rem; color: #94a3b8;">SCORE</span><span class="score-val" style="color: #94a3b8">-</span></div>
+                <div class="score-item"><span style="font-size: 0.6rem; color: #3b82f6;">JOGADOR O</span><span class="score-val" id="scoreO" style="color: #3b82f6">0</span></div>
             </div>
-
             <div id="status">Conectando...</div>
-            
-            <div class="board" id="board">
-                <div class="cell" data-index="0"></div>
-                <div class="cell" data-index="1"></div>
-                <div class="cell" data-index="2"></div>
-                <div class="cell" data-index="3"></div>
-                <div class="cell" data-index="4"></div>
-                <div class="cell" data-index="5"></div>
-                <div class="cell" data-index="6"></div>
-                <div class="cell" data-index="7"></div>
-                <div class="cell" data-index="8"></div>
+            <div class="board">
+                <div class="cell" data-index="0"></div><div class="cell" data-index="1"></div><div class="cell" data-index="2"></div>
+                <div class="cell" data-index="3"></div><div class="cell" data-index="4"></div><div class="cell" data-index="5"></div>
+                <div class="cell" data-index="6"></div><div class="cell" data-index="7"></div><div class="cell" data-index="8"></div>
             </div>
-            
-            <button id="resetBtn">Zerar Tabuleiro</button>
-            <span class="room-badge">SALA PIN: <span id="roomDisplay"></span></span>
+            <button id="resetBtn">ZERAR TABULEIRO</button>
+            <div class="room-badge">SALA PIN: <span id="roomDisplay" style="color: #22c55e"></span></div>
         </div>
     </div>
-
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script src="script.js"></script>
 </body>
