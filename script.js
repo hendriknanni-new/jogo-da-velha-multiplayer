@@ -9,11 +9,21 @@ const cells = document.querySelectorAll('.cell');
 const statusText = document.getElementById('status');
 
 function joinRoom() {
-    const input = document.getElementById('roomInput').value.trim();
-    roomID = input || 'geral';
+    const input = document.getElementById('roomInput');
+    let digits = input.value.replace(/[^0-9]/g, '');
+
+    if (digits.length === 0) {
+        alert("Digite 4 números!");
+        return;
+    }
+
+    // Padroniza sempre para 4 dígitos (ex: 7 vira 0007)
+    roomID = digits.padStart(4, '0');
+    
     document.getElementById('lobby').style.display = 'none';
     document.getElementById('gameArea').style.display = 'flex';
     document.getElementById('roomDisplay').innerText = roomID;
+
     socket.emit('joinRoom', roomID);
 }
 
@@ -25,9 +35,10 @@ socket.on('playerAssignment', (symbol) => {
 function updateStatus() {
     if (!active) return;
     if (!mySymbol) {
-        statusText.innerText = "Sala cheia! (Observando)";
+        statusText.innerText = "Observando jogo...";
+        statusText.style.color = "#888";
     } else {
-        statusText.innerText = (mySymbol === currentTurn) ? `SUA VEZ (${mySymbol})` : `Vez do oponente (${currentTurn})`;
+        statusText.innerText = (mySymbol === currentTurn) ? `SUA VEZ (${mySymbol})` : `Aguarde oponente...`;
         statusText.style.color = (mySymbol === currentTurn) ? "#2ecc71" : "#f1c40f";
     }
 }
