@@ -34,14 +34,5 @@
 
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script src="script.js"></script>
-    
-    <script>
-        // Esse código faz o botão avisar o servidor para resetar
-        document.getElementById('resetBtn').addEventListener('click', () => {
-            if(confirm("Deseja reiniciar o jogo para todos?")) {
-                socket.emit('requestRestart');
-            }
-        });
-    </script>
 </body>
 </html>
